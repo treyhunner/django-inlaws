@@ -93,7 +93,7 @@
 			{% for item in v.items %}
 				<li><a href="{% get_admin_url item %}" style="font-weight:normal;">{{ item }}</a></li>
 			{% endfor %}
-			<li><a href="{{ v.url }}?{{ v.related_field_name }}={{ adminform.form.instance.pk }}">Show All ({{v.items|length }})</a></li>
+			<li><a href="{{ v.url }}?{{ v.related_field_name }}={{ adminform.form.instance.pk }}">Show All ({{ v.count }})</a></li>
 		</ul>
 		<hr/>
 	{% endif %}

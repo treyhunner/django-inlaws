@@ -75,6 +75,7 @@ class RelatedObjectsNode(Node):
                 rel[related.name] = {
                     'display_name': "%s %s" % (app, model),
                     'items': qs[:ITEM_LIMIT],
+                    'count': qs.count(),
                     'related_field_name': related.field.name,
                     'url': reverse("admin:%s_%s_changelist" % (app, model))
                 }
