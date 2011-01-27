@@ -37,3 +37,17 @@ Usage is very simple.
 4. The contents of the file should be::
 
 	{% extends "inlaws/change_form.html" %}
+
+
+Settings Options
+=====
+
+Some features can be controlled through your project's settings file.
+
+The maximum number of related items displayed for each model can be controlled with `ADMIN_RELATED_ITEM_LIMIT`.  The default setting is `5`.
+
+    ADMIN_RELATED_ITEM_LIMIT = 8
+
+Models can also be globally excluded from showing up in related items lists by setting `ADMIN_RELATED_EXCLUDES`.  This list is empty by default.
+
+    ADMIN_RELATED_EXCLUDES = ['some_application.SomeModel']
