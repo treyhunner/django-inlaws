@@ -73,7 +73,7 @@ class RelatedObjectsNode(Node):
             # url for the model changelist.
             try:
                 rel[related.name] = {
-                    'display_name': "%s %s" % (app, model),
+                    'display_name': related.opts.verbose_name_plural,
                     'items': qs[:ITEM_LIMIT],
                     'count': qs.count(),
                     'related_field_name': related.field.name,
