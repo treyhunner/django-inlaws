@@ -44,6 +44,9 @@ class RelatedObjectsNode(Node):
         except VariableDoesNotExist:
             return ""
             
+        if obj.pk is None:
+            return ""
+
         rel = {}
         related_models = obj._meta.get_all_related_objects()
         related_models.extend(obj._meta.get_all_related_many_to_many_objects())
