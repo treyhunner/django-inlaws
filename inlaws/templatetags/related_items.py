@@ -21,20 +21,21 @@ for mod in _EXCLUDED_MODELS:
         raise ImproperlyConfigured(
             "ADMIN_RELATED_EXCLUDES: '%s' is not a valid model" % mod
         )
-        
+
     EXCLUDED_MODELS.append("%s:%s" % (a.lower(), m.lower()))
-    
+
 # An integer of the number to limit in the queryset.
 ITEM_LIMIT = getattr(settings, "ADMIN_RELATED_ITEM_LIMIT", 5)
 
 register = Library()
-    
+
+
 class RelatedObjectsNode(Node):
     def __init__(self, obj, varname):
         super(RelatedObjectsNode, self).__init__()
-        
+
         self.obj, self.varname = obj, varname
-    
+
     def render(self, context):
         """
         Retreive the related objects for a specified instance.
@@ -43,35 +44,35 @@ class RelatedObjectsNode(Node):
             obj = Variable(self.obj).resolve(context)
         except VariableDoesNotExist:
             return ""
-            
+
         if obj.pk is None:
             return ""
 
         rel = {}
         related_models = obj._meta.get_all_related_objects()
         related_models.extend(obj._meta.get_all_related_many_to_many_objects())
-        
+
         for related in related_models:
-            # If model is specified to be excluded, just move on to the 
+            # If model is specified to be excluded, just move on to the
             # next related model.
             if related.name in EXCLUDED_MODELS:
                 continue
-                
+
             # Get the app and model
             app, model = related.name.split(":")
-            
+
             # Build the kwargs for the queryset that will be shown
             kwgs = {'%s__pk' % related.field.name: obj.pk}
-            
+
             # Retreive the queryset, limiting the number of item
             # that will be returned
             qs = related.model.objects.filter(**kwgs)
-            
-            # If the queryset is empty, just move on 
+
+            # If the queryset is empty, just move on
             # to the next related model.
             if not qs:
                 continue
-            
+
             # Add a display_name, items, related field name and the admin
             # url for the model changelist.
             try:
@@ -86,7 +87,7 @@ class RelatedObjectsNode(Node):
                 # This error will occur naturally for models that have no
                 # admin interface specified.
                 pass
-        
+
         # Set the return variable to the dictionary.
         context[self.varname] = rel
         return ""
@@ -95,16 +96,16 @@ class RelatedObjectsNode(Node):
 class AdminUrlNode(Node):
     """
     Returns the admin url to change the object passed as a parameter.
-    
+
     Optionally will set the value to a variable, otherwise outputs it.
     """
-    
+
     def __init__(self, obj, varname=None):
         super(AdminUrlNode, self).__init__()
-        
+
         self.obj = obj
         self.varname = varname
-    
+
     def render(self, context):
         """
         Either write out the url, or set the variable in the context.
@@ -114,7 +115,7 @@ class AdminUrlNode(Node):
             obj = Variable(self.obj).resolve(context)
         except VariableDoesNotExist:
             obj = self.obj
-        
+
         try:
             urlname = 'admin:%s_%s_change' % (
                 obj._meta.app_label, obj._meta.module_name
@@ -124,11 +125,12 @@ class AdminUrlNode(Node):
             if settings.TEMPLATE_DEBUG:
                 print "Got an exception resolving an admin url: ", err
             return ''
-        
+
         if self.varname:
             context[self.varname] = url
         else:
             return url
+
 
 def get_admin_url(parser, token):
     """
@@ -151,26 +153,27 @@ def get_admin_url(parser, token):
         )
     elif argc == 4:
         varname = argv[3]
-    
+
     return AdminUrlNode(argv[1], varname)
+
 
 def do_related_objects(parser, token):
     """
     Returns the objects related to the object passed. The objects returned are
     objects that have a ForeignKey or ManyToMany relation to this object.
-    
+
     {% admin_related_objects object as varname %}
     """
     argv = token.contents.split()
     argc = len(argv)
-    
+
     if argc != 4:
         raise TemplateSyntaxError('Tag %s takes three arguments.' % argv[0])
     if argv[2] != "as":
         raise TemplateSyntaxError(
             'Second argument must be "as" for tag %s' % argv[0]
         )
-        
+
     return RelatedObjectsNode(argv[1], argv[3])
 
 register.tag("admin_related_objects", do_related_objects)
