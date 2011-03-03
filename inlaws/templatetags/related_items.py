@@ -9,20 +9,27 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 
+def models_from_strings(model_strings):
+    """
+    Translate list of "app.model" strings into models
+    """
+    model_list = []
+    for mod in model_strings:
+        try:
+            a, m = mod.split(".")
+            ctype = ContentType.objects.get(app_label__iexact=a, model__iexact=m)
+        except ContentType.DoesNotExist:
+            raise ImproperlyConfigured(
+                "ADMIN_RELATED_EXCLUDES: '%s' is not a valid model" % mod
+            )
+
+        model_list.append("%s:%s" % (a.lower(), m.lower()))
+    return model_list
+
 _EXCLUDED_MODELS = getattr(settings, "ADMIN_RELATED_EXCLUDES", [])
 
 # Holds a list of "app.model" strings of the models that should be ignored.
-EXCLUDED_MODELS = []
-for mod in _EXCLUDED_MODELS:
-    try:
-        a, m = mod.split(".")
-        ctype = ContentType.objects.get(app_label__iexact=a, model__iexact=m)
-    except ContentType.DoesNotExist:
-        raise ImproperlyConfigured(
-            "ADMIN_RELATED_EXCLUDES: '%s' is not a valid model" % mod
-        )
-
-    EXCLUDED_MODELS.append("%s:%s" % (a.lower(), m.lower()))
+EXCLUDED_MODELS = models_from_strings(_EXCLUDED_MODELS)
 
 # An integer of the number to limit in the queryset.
 ITEM_LIMIT = getattr(settings, "ADMIN_RELATED_ITEM_LIMIT", 5)
@@ -52,10 +59,14 @@ class RelatedObjectsNode(Node):
         related_models = obj._meta.get_all_related_objects()
         related_models.extend(obj._meta.get_all_related_many_to_many_objects())
 
+        excluded_inlaws = getattr(obj, 'EXCLUDED_INLAWS', [])
+
+        excluded_models = EXCLUDED_MODELS + models_from_strings(excluded_inlaws)
+
         for related in related_models:
             # If model is specified to be excluded, just move on to the
             # next related model.
-            if related.name in EXCLUDED_MODELS:
+            if related.name in excluded_models:
                 continue
 
             # Get the app and model
